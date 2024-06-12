@@ -24,20 +24,23 @@ def MCM(in_channel, out_channel):
 
 
 class CEGNet(nn.Module):
-    def __init__(self, in_channel=3, strides=[2, 2, 1], pn_conv_channels=[3,32,64,256,512]):
+    def __init__(self, in_channel=6, strides=[2, 2, 1], pn_conv_channels=[3,32,64,256,512]):
         super(CEGNet, self).__init__()
         self.ft_1 = resnet34(in_channel, strides) 
         self.ft_2 = GIE(pn_conv_channels) 
-        self.ft_3 = EEM()  
+        self.ft_3 = EEM()     
 
     def forward(self, rgb , xyz): 
-        ft_1 = self.ft_1(rgb)
+        # get rgb-pc data
+        rgb_pc = torch.cat([rgb,xyz],dim=1)       
+
+        ft_1 = self.ft_1(rgb_pc)
         b, c, h, w = ft_1.size()
         
         down_xyz = F.interpolate(xyz[:, :], (h, w), mode='nearest')  
         ft_2 = self.ft_2(down_xyz)
 
-        ft_3 = self.ft_3(rgb)  
+        ft_3 = self.ft_3(rgb_pc)  
 
         ft_c = torch.cat([ft_1,ft_2, ft_3], dim=1)
 
@@ -48,17 +51,17 @@ class model(nn.Module):
         super(model, self).__init__()
         self.num_class = num_class
 
-        self.xyznet = CEGNet() 
+        self.cegnet = CEGNet() 
 
-        self.trans = MCM(1024 + 512 + 512 + 128, 3 * num_class)  
+        self.trans = MCM(1024 + 512 + 512 + 512, 3 * num_class)  
 
-        self.prim_x = MCM(1024 + 512 + 512 + 128, 4 * num_class)
+        self.prim_x = MCM(1024 + 512 + 512 + 512, 4 * num_class)
 
-        self.score = MCM(1024 + 512 + 512 + 128, num_class)
+        self.score = MCM(1024 + 512 + 512 + 512, num_class)
 
     def forward(self, rgb, xyz, cls_ids):
 
-        ft, ft_ds = self.xyznet(rgb , xyz)  
+        ft, ft_ds = self.cegnet(rgb , xyz)  
         b, c, h, w = ft.size() 
 
         px = self.prim_x(ft)

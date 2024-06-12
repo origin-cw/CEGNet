@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from models import resnet_utils as res_net
+# import resnet_utils as res_net
 
 class resnet34(nn.Module):
-    def __init__(self, in_channel=3, strides=[2, 2, 1]):
+    def __init__(self, in_channel=6, strides=[2, 2, 1]):
         super(resnet34, self).__init__()
         # mnk modify
         self.conv1 = nn.Conv2d(in_channel, 64, kernel_size=3, stride=1, padding=1, bias=False)
@@ -110,4 +111,15 @@ class plain_cnn(nn.Module):
 
         ft = self.embedding(torch.cat([l3, lg], dim=1))
         return ft
+    
+
+# # if __name__ == "__main__":  
+# # 假设输入张量的形状为(batch_size, in_channels, height, width)
+# if __name__ == "__main__":
+#     # 假设输入张量的形状为(batch_size, in_channels, height, width)
+#     input_tensor = torch.randn(8, 3, 540, 720)  # batch_size=8, in_channels=3, height=540, width=720
+#     model = resnet34(in_channel=3, strides=[2, 2, 1])
+#     output = model(input_tensor)
+#     print(output.shape)  # 打印输出张量的形状
+
 

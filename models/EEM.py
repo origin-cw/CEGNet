@@ -1,27 +1,66 @@
 import torch
 import torch.nn as nn
-
-class EEMBranch(nn.Module):
-    def __init__(self, input_channels, output_channels):
-        super(EEMBranch, self).__init__()
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.conv1 = nn.Conv2d(input_channels, output_channels, kernel_size=1)
-        self.conv2 = nn.Conv2d(input_channels, output_channels, kernel_size=1)
-
-    def forward(self, x):
-        global_feature = self.avg_pool(x)
-        weighted_feature = self.conv1(global_feature) + global_feature
-        return self.conv2(weighted_feature)
+import torch.nn.functional as F
 
 class EEM(nn.Module):
-    def __init__(self, input_channels, output_channels):
+    def __init__(self):
         super(EEM, self).__init__()
-        self.branch1 = EEMBranch(input_channels, output_channels)
-        self.branch2 = EEMBranch(input_channels, output_channels)
-        self.conv = nn.Conv2d(output_channels, output_channels, kernel_size=1)
+
+        self.conv_layers = nn.Sequential(
+            nn.Conv2d(6, 32, kernel_size=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(inplace=True),
+
+            nn.Conv2d(32, 64, kernel_size=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+
+            nn.Conv2d(64, 128, kernel_size=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+
+            nn.Conv2d(128, 256, kernel_size=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        )
+
+        self.avg_pool = nn.AvgPool2d(kernel_size=3, stride=4)
+        self.max_pool = nn.MaxPool2d(kernel_size=32)
+
+        self.branch1_conv = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=3, stride=1,padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3, stride=1,padding=1),
+            nn.BatchNorm2d(256),
+            nn.Sigmoid()
+        )
+
+        self.branch2_conv = nn.Sequential(
+            nn.Conv2d(256, 256, kernel_size=5, stride=1,padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 256, kernel_size=3,stride=2,padding=2),
+            nn.BatchNorm2d(256),
+            nn.Sigmoid()
+        )
 
     def forward(self, x):
-        branch1_output = self.branch1(x)
-        branch2_output = self.branch2(x)
-        fused_feature = self.conv(branch1_output + branch2_output)
-        return fused_feature
+
+        x = self.conv_layers(x)
+
+        ft = self.avg_pool(x)
+        max_ft = self.max_pool(ft)
+
+        branch1 = self.branch1_conv(ft)
+        branch2 = self.branch2_conv(ft)
+
+        branch1_out = torch.mul(branch1, max_ft)
+        branch2_out = torch.mul(branch2, max_ft)
+
+        branch2_out_repeat = branch2_out.repeat(1, 1, 2, 2)
+
+        mixed_feature = torch.cat([branch1_out ,branch2_out_repeat], dim=1)
+
+        return mixed_feature
+    

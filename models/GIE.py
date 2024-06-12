@@ -94,3 +94,12 @@ class MLP2(nn.Module):
         gl_ft = F.adaptive_avg_pool2d(gl_ft, (h, w))
 
         return torch.cat([l3, gl_ft], dim=1)
+    
+
+# 下段代码用于测试GIE模块的输出特征图
+# if __name__ == "__main__":  
+# # 假设输入张量的形状为(batch_size, in_channels, height, width)
+#     input_tensor = torch.randn(8, 3, 32, 32)  # batch_size=8, in_channels=3, height=64, width=64
+#     gie = GIE(conv_channels=[3, 32, 64, 256, 512])
+#     output = gie(input_tensor)
+#     print(output.shape)  # 输出张量的形状应为(batch_size, 1024, height, width)

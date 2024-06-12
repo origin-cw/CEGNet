@@ -406,7 +406,7 @@ def translate_gt_mask2_pred_mask(data_path):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--tless_path', type=str, default='', help='tless path')
+    parser.add_argument('--tless_path', type=str, default='./datasets/tless', help='tless path')
     parser.add_argument('--gt_mask', type=bool, default=True, help='gt mask or estimation mask from stablepose')  
     parser.add_argument('--train_set', type=bool, default=True, help='gt mask or estimation mask from stablepose')
 

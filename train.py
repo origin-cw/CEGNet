@@ -55,13 +55,13 @@ parser.add_argument('--noise_trans', default=0.03, help='range of the random noi
 
 parser.add_argument('--augmentation', type=bool, default= True, help='train tless with data augmentation or not')   
 
-parser.add_argument('--nepoch', type=int, default=10, help='max number of epochs to train') 
+parser.add_argument('--nepoch', type=int, default=90, help='max number of epochs to train') 
 
-parser.add_argument('--resume', type=str, default='', help='resume ES6D model') 
+parser.add_argument('--resume', type=str, default='', help='resume ES6D model')   
 
 parser.add_argument('--test_only', type=bool, default=False, help='resume es6d model')
 
-parser.add_argument('--start_epoch', type=int, default=1, help='which epoch to start') 
+parser.add_argument('--start_epoch', type=int, default=0, help='which epoch to start') 
 
 opt = parser.parse_args()
 
@@ -106,6 +106,7 @@ def main():
 
 def predict(data, estimator, lossor, opt, mode='train'):
 
+    # load data
     cls_ids = data['class_id'].to(opt.gpu) 
     rgb = data['rgb'].to(opt.gpu) 
     depth = data['xyz'].to(opt.gpu)
@@ -193,7 +194,7 @@ def per_processor(gpu, opt):
 
 
     # init DDP model
-    estimator = pose_net.ES6D(num_class=opt.num_objects).to(gpu) 
+    estimator = pose_net.model(num_class=opt.num_objects).to(gpu) 
 
     # init optimizer
     optimizer = optim.Adam(estimator.parameters(), lr=opt.lr * opt.gpu_number)
@@ -305,7 +306,7 @@ def train(train_loader, estimator, lossor, optimizer, epoch, tensorboard_writer,
 
         loss, loss_dict = predict(data, estimator, lossor, opt, mode='train')  
 
-
+        loss.requires_grad_(True)
         loss.backward()  
         optimizer.step()
         optimizer.zero_grad()
@@ -433,6 +434,7 @@ def log_function(loss_list, logger, epoch, batch, lr):
         time.strftime("%Hh %Mm %Ss", time.gmtime(time.time() - st_time)), epoch, batch, lr)  
     for key in l:
         tmp = tmp + ' {}:{:.4f}'.format(key, l[key]) 
+    logger.info(tmp)
 
 def draw_loss_list(phase, loss_list, tensorboard_writer):
 
@@ -447,5 +449,5 @@ if __name__ == '__main__':
 
     main()
 
-    # envs mypose
+    # envs CEGNet
 

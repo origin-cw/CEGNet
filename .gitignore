@@ -1,4 +1,14 @@
+#路径前不要加 .   
+#最简单的方式就是通过git status查看状态，将不想要的文件或者路径直接复制添加到这里面来
+
 *.pcd
 /datasets/tless/test_primesense
 /datasets/tless/train_pbr
 /bop_toolkit-master
+
+/datasets/tless/train_pbr_mat/
+/datasets/tless/test_primesense_gt_mask_mat/
+/datasets/tless/train_pbr_mat.txt
+/datasets/tless/test_primesense_gt_mask_mat.txt
+
+test.py
